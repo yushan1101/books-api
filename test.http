@@ -1,0 +1,50 @@
+### Test 1 - Health check
+GET http://localhost:8000/
+
+### Test 2 - List all books
+GET http://localhost:8000/api/books
+
+### Test 3 - Search
+GET http://localhost:8000/api/books?q=clean
+
+### Test 4 - Limit
+GET http://localhost:8000/api/books?limit=2
+
+### Test 5 - Get one book
+GET http://localhost:8000/api/books/1
+
+### Test 6 - Not found
+GET http://localhost:8000/api/books/999
+
+### Test 7 - Create a book
+POST http://localhost:8000/api/books
+Content-Type: application/json
+
+{
+    "title": "JavaScript Everywhere",
+    "author": "Adam D. Scott",
+    "year": 2020
+}
+
+### List all books fresh
+GET http://localhost:8000/api/books
+Cache-Control: no-cache
+
+### Test 8 - Validation error
+POST http://localhost:8000/api/books
+Content-Type: application/json
+
+{
+    "title": "Just a title"
+}
+
+### Test 9 - Update a book
+PUT http://localhost:8000/api/books/1
+Content-Type: application/json
+
+{
+    "year": 2009
+}
+
+### Test 10 - Delete a book
+DELETE http://localhost:8000/api/books/2

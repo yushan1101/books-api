@@ -29,6 +29,10 @@ class ComposerStaticInit318f3d9d24e5a6cc4a94960dba0f0ab8
             'Fig\\Http\\Message\\' => 17,
             'FastRoute\\' => 10,
         ),
+        'A' =>
+        array (
+            'App\\' => 4,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -65,6 +69,10 @@ class ComposerStaticInit318f3d9d24e5a6cc4a94960dba0f0ab8
         'FastRoute\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/fast-route/src',
+        ),
+        'App\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/src',
         ),
     );
 
