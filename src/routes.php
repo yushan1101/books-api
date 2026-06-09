@@ -1,8 +1,8 @@
 <?php
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Slim\App;
 use App\Controllers\BookController;
+use App\Database;
+use App\Repositories\BookRepository;
+use Slim\App;
 
 return function (App $app): void {
 
@@ -11,20 +11,13 @@ return function (App $app): void {
         return $res;
     });
 
-    $app->get('/', function (Request $r, Response $s) {
-        $s->getBody()->write(json_encode([
-            'name' => 'Books REST API',
-            'version' => '1.0.0',
-        ]));
-        return $s->withHeader('Content-Type', 'application/json');
-    });
+    $controller = new BookController(new BookRepository(Database::get()));
 
-    $app->group('/api', function ($g) {
-        $g->get('/books',         [BookController::class, 'index']);
-        $g->get('/books/{id}',    [BookController::class, 'show']);
-        $g->post('/books',        [BookController::class, 'create']);
-        $g->put('/books/{id}',    [BookController::class, 'update']);
-        $g->delete('/books/{id}', [BookController::class, 'delete']);
-        $g->post('/reset',        [BookController::class, 'reset']);
+    $app->group('/api', function ($g) use ($controller) {
+        $g->get   ('/books',      [$controller, 'index']);
+        $g->get   ('/books/{id}', [$controller, 'show']);
+        $g->post  ('/books',      [$controller, 'create']);
+        $g->put   ('/books/{id}', [$controller, 'update']);
+        $g->delete('/books/{id}', [$controller, 'delete']);
     });
 };

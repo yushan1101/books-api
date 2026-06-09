@@ -16,6 +16,7 @@ GET http://localhost:8000/api/books/1
 ### Test 6 - Not found
 GET http://localhost:8000/api/books/999
 
+
 ### Test 7 - Create a book
 POST http://localhost:8000/api/books
 Content-Type: application/json
@@ -54,3 +55,9 @@ OPTIONS http://localhost:8000/api/books
 Content-Type: application/json
 Origin: http://localhost:5173
 Access-Control-Request-Method: POST
+
+### Test 3 - Create a book
+POST http://localhost:8000/api/books
+Content-Type: application/json
+
+{ "title": "Refactoring", "author": "Martin Fowler", "year": 2018 }
