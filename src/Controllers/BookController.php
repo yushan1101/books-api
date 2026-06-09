@@ -7,21 +7,38 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 final class BookController
 {
     private static array $books = [];
+    private static bool $loaded = false;
 
-    private static function bootstrap(): void
-    {
-        if (self::$books === []) {
-            self::$books = require __DIR__ . '/../Data/books.php';
-        }
+    private static function storeFile(): string {
+        $dir = __DIR__ . '/../../var';
+        if (!is_dir($dir)) @mkdir($dir, 0777, true);
+        return $dir . DIRECTORY_SEPARATOR . 'books.json';
     }
 
-    /** GET /api/books */
-    public function index(Request $req, Response $res): Response
-    {
-        self::bootstrap();
+    private static function load(): void {
+        if (self::$loaded) return;
+        $file = self::storeFile();
+        if (is_file($file)) {
+            $data = json_decode((string)@file_get_contents($file), true);
+            if (is_array($data)) { self::$books = $data; self::$loaded = true; return; }
+        }
+        self::$books = require __DIR__ . '/../Data/books.php';
+        self::$loaded = true;
+        self::save();
+    }
+
+    private static function save(): void {
+        @file_put_contents(
+            self::storeFile(),
+            json_encode(self::$books, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+            LOCK_EX
+        );
+    }
+
+    public function index(Request $req, Response $res): Response {
+        self::load();
         $params = $req->getQueryParams();
         $items = self::$books;
-
         if (!empty($params['q'])) {
             $q = mb_strtolower((string)$params['q']);
             $items = array_values(array_filter($items, fn($b) =>
@@ -29,18 +46,14 @@ final class BookController
                 str_contains(mb_strtolower($b['author']), $q)
             ));
         }
-
         if (!empty($params['limit'])) {
             $items = array_slice($items, 0, max(1, (int)$params['limit']));
         }
-
         return $this->json($res, ['count' => count($items), 'data' => $items]);
     }
 
-    /** GET /api/books/{id} */
-    public function show(Request $req, Response $res, array $args): Response
-    {
-        self::bootstrap();
+    public function show(Request $req, Response $res, array $args): Response {
+        self::load();
         $id = (int)($args['id'] ?? 0);
         $book = $this->findById($id);
         return $book
@@ -48,17 +61,11 @@ final class BookController
             : $this->json($res, ['error' => "Book {$id} not found"], 404);
     }
 
-    /** POST /api/books */
-    public function create(Request $req, Response $res): Response
-    {
-        self::bootstrap();
+    public function create(Request $req, Response $res): Response {
+        self::load();
         $body = (array)($req->getParsedBody() ?? []);
         $errors = $this->validate($body, requireAll: true);
-
-        if (!empty($errors)) {
-            return $this->json($res, ['errors' => $errors], 400);
-        }
-
+        if (!empty($errors)) return $this->json($res, ['errors' => $errors], 400);
         $id = (max(array_column(self::$books, 'id') ?: [0])) + 1;
         $book = [
             'id'     => $id,
@@ -67,47 +74,46 @@ final class BookController
             'year'   => (int)$body['year'],
             'genre'  => trim((string)($body['genre'] ?? 'Uncategorised')),
         ];
-
         self::$books[] = $book;
+        self::save();
         return $this->json($res, ['message' => 'Book created', 'data' => $book], 201)
             ->withHeader('Location', '/api/books/' . $id);
     }
 
-    /** PUT /api/books/{id} */
-    public function update(Request $req, Response $res, array $args): Response
-    {
-        self::bootstrap();
+    public function update(Request $req, Response $res, array $args): Response {
+        self::load();
         $id = (int)($args['id'] ?? 0);
         $idx = $this->findIndexById($id);
-
         if ($idx === null) return $this->json($res, ['error' => "Book {$id} not found"], 404);
-
         $body = (array)($req->getParsedBody() ?? []);
         $errors = $this->validate($body, requireAll: false);
         if (!empty($errors)) return $this->json($res, ['errors' => $errors], 400);
-
         $current = self::$books[$idx];
         foreach (['title', 'author', 'genre'] as $k) {
             if (array_key_exists($k, $body)) $current[$k] = trim((string)$body[$k]);
         }
         if (array_key_exists('year', $body)) $current['year'] = (int)$body['year'];
-
         self::$books[$idx] = $current;
+        self::save();
         return $this->json($res, ['message' => 'Book updated', 'data' => $current]);
     }
 
-    /** DELETE /api/books/{id} */
-    public function delete(Request $req, Response $res, array $args): Response
-    {
-        self::bootstrap();
+    public function delete(Request $req, Response $res, array $args): Response {
+        self::load();
         $id = (int)($args['id'] ?? 0);
         $idx = $this->findIndexById($id);
-
         if ($idx === null) return $this->json($res, ['error' => "Book {$id} not found"], 404);
-
         $deleted = self::$books[$idx];
         array_splice(self::$books, $idx, 1);
+        self::save();
         return $this->json($res, ['message' => 'Book deleted', 'data' => $deleted]);
+    }
+
+    public function reset(Request $req, Response $res): Response {
+        self::$books = require __DIR__ . '/../Data/books.php';
+        self::$loaded = true;
+        self::save();
+        return $this->json($res, ['message' => 'Data reset to seed', 'count' => count(self::$books)]);
     }
 
     private function findById(int $id): ?array {

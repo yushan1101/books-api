@@ -1,0 +1,20 @@
+{
+  "name": "books-frontend-ch9",
+  "version": "1.0.0",
+  "description": "SCSM2223 Chapter 9 — Vue 3 + Vite frontend for the in-memory Books API.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev":     "vite",
+    "build":   "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "vue":   "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "vite":               "^5.2.0"
+  }
+}

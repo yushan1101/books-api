@@ -5,6 +5,12 @@ use Slim\App;
 use App\Controllers\BookController;
 
 return function (App $app): void {
+
+    // Handle OPTIONS preflight for ALL routes
+    $app->options('/{routes:.+}', function (Request $req, Response $res) {
+        return $res;
+    });
+
     $app->get('/', function (Request $r, Response $s) {
         $s->getBody()->write(json_encode([
             'name' => 'Books REST API',
@@ -14,10 +20,11 @@ return function (App $app): void {
     });
 
     $app->group('/api', function ($g) {
-        $g->get('/books', [BookController::class, 'index']);
-        $g->get('/books/{id}', [BookController::class, 'show']);
-        $g->post('/books', [BookController::class, 'create']);
-        $g->put('/books/{id}', [BookController::class, 'update']);
+        $g->get('/books',         [BookController::class, 'index']);
+        $g->get('/books/{id}',    [BookController::class, 'show']);
+        $g->post('/books',        [BookController::class, 'create']);
+        $g->put('/books/{id}',    [BookController::class, 'update']);
         $g->delete('/books/{id}', [BookController::class, 'delete']);
+        $g->post('/reset',        [BookController::class, 'reset']);
     });
 };

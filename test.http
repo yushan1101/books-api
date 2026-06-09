@@ -48,3 +48,9 @@ Content-Type: application/json
 
 ### Test 10 - Delete a book
 DELETE http://localhost:8000/api/books/2
+
+### CORS preflight test
+OPTIONS http://localhost:8000/api/books
+Content-Type: application/json
+Origin: http://localhost:5173
+Access-Control-Request-Method: POST
